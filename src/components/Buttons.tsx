@@ -4,27 +4,15 @@ import { signIn, signOut } from "next-auth/react";
 import Link from "next/link";
 
 const LoginButton = () => {
-  return (
-    <button style={{ marginRight: 10 }} onClick={() => signIn()}>
-      Sign in
-    </button>
-  );
+  return <button onClick={() => signIn()}>Sign in</button>;
 };
 
 const RegisterButton = () => {
-  return (
-    <Link href="/register" style={{ marginRight: 10 }}>
-      Register
-    </Link>
-  );
+  return <Link href="/register">Register</Link>;
 };
 
 const LogoutButton = () => {
-  return (
-    <button style={{ marginRight: 10 }} onClick={() => signOut()}>
-      Sign Out
-    </button>
-  );
+  return <button onClick={() => signOut()}>Sign Out</button>;
 };
 
 const ProfileButton = () => {
