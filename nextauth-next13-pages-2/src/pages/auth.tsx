@@ -10,6 +10,8 @@ import {
 } from "@chakra-ui/react";
 import { Field, Form, Formik } from "formik";
 import type { NextPage } from "next";
+import { getProviders, signIn } from "next-auth/react";
+import Router from "next/router";
 import { useState } from "react";
 
 const Background = ({ children }: any) => (
@@ -78,29 +80,85 @@ const Auth: NextPage = ({ providers }: any) => {
    * Get Providers server side via getServerSideProps
    */
   const ProvidersButtons = ({ providers }: any) => (
-    <Flex direction="column" w="100%"></Flex>
+    <Flex direction="column" w="100%">
+      {Object.values(providers).map(
+        (provider: any) =>
+          provider.name !== "Credentials" && (
+            <Button
+              key={provider.name}
+              mb={4}
+              bg={"#24292E"}
+              color={"white"}
+              _hover={{ bg: "#24292E90" }}
+              type="submit"
+              onClick={() => {
+                signIn(provider.id, {
+                  callbackUrl: `http://localhost:3000/`,
+                });
+              }}
+            >
+              <Box>Sign in with {provider.name}</Box>
+            </Button>
+          )
+      )}
+    </Flex>
   );
 
   /**
    * Redirect Home - NextJS Router
-   * (Instead of redirecting to Home page, it could be a success Register or Login page)
+   * (Instead of redirect to Home page, we could redirect to any page, e.g. a success page)
    */
-  const redirectToHome = () => {};
+  const redirectToHome = () => {
+    const { pathname } = Router;
+    if (pathname === "/auth") {
+      Router.push("/");
+    }
+  };
 
   /**
    * Register
    */
-  const registerUser = async () => {};
+  const registerUser = async () => {
+    const res = await fetch("/api/register", {
+      method: "POST",
+      body: JSON.stringify({ username, email, password }),
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    })
+      .then(async () => {
+        await loginUser();
+        redirectToHome();
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+    console.log(res);
+  };
 
   /**
    * Login
    */
-  const loginUser = async () => {};
+  const loginUser = async () => {
+    const res: any = await signIn("credentials", {
+      redirect: false,
+      email: email,
+      password: password,
+      callbackUrl: `${window.location.origin}`,
+    });
+
+    res.error ? console.log(res.error) : redirectToHome();
+  };
 
   /**
    * Submit Form (Login or Register)
    */
-  const formSubmit = (actions: any) => {};
+  const formSubmit = (actions: any) => {
+    actions.setSubmitting(false);
+
+    authType === "Login" ? loginUser() : registerUser();
+  };
 
   return (
     <Background>
@@ -207,3 +265,10 @@ export default Auth;
 /**
  * Server side API call
  */
+export async function getServerSideProps() {
+  return {
+    props: {
+      providers: await getProviders(),
+    },
+  };
+}
